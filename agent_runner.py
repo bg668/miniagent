@@ -74,7 +74,10 @@ class AgentRunner:
         }
 
     def _run_reviewer(self, task: TaskNode) -> dict[str, Any]:
-        # Controllable reject-then-pass: reject on first attempt, pass on retry
+        # task.retry_count mirrors the executor's attempt number (set by Orchestrator),
+        # enabling deterministic test behaviour: reject on the first attempt (count==0),
+        # approve once the executor has retried at least once (count>0).
+        # This is intentional mock behaviour; a real LLM reviewer would evaluate content.
         if task.retry_count == 0:
             return {
                 "status": "ok",

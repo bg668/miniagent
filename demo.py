@@ -5,7 +5,8 @@ demo.py: showcases the Planner → Executor → Reviewer closed loop.
 Run:
     python demo.py
 """
-import sys, json
+import sys
+import json
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
