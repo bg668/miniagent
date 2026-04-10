@@ -477,8 +477,6 @@ class OpenAIChatCompletionsAdapter:
             request_options["tools"] = [_tool_to_openai_dict(tool) for tool in context.tools]
         if api_key is not None:
             request_options["api_key"] = api_key
-        if options.base_url is not None:
-            request_options["base_url"] = options.base_url
         if options.temperature is not None:
             request_options["temperature"] = options.temperature
         if options.top_p is not None:
