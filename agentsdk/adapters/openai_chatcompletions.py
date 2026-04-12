@@ -6,9 +6,9 @@ from dataclasses import replace
 from inspect import isawaitable
 from typing import Any, AsyncIterator, Awaitable, Iterable, Mapping, Sequence
 
-from agent_sdk.runtime.config import AgentLoopConfig
-from agent_sdk.runtime.errors import OpenAIAdapterError
-from agent_sdk.runtime.models import (
+from agentsdk.runtime.config import AgentLoopConfig
+from agentsdk.runtime.errors import OpenAIAdapterError
+from agentsdk.runtime.models import (
     AgentContext,
     AssistantMessage,
     AssistantMessageEvent,
@@ -28,7 +28,7 @@ from agent_sdk.runtime.models import (
     UsageCost,
     utc_timestamp_ms,
 )
-from agent_sdk.runtime.run_control import CancelToken
+from agentsdk.runtime.run_control import CancelToken
 
 
 def _maybe_get(source: Any, key: str, default: Any = None) -> Any:

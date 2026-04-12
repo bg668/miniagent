@@ -23,8 +23,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 from openai import AsyncOpenAI
 
-from agent_sdk import Agent, AgentOptions, ModelInfo, TextContent, AssistantMessage
-from agent_sdk.adapters.openai_chatcompletions import OpenAIChatCompletionsAdapter
+from agentsdk import Agent, AgentOptions, ModelInfo, TextContent, AssistantMessage
+from agentsdk.adapters.openai_chatcompletions import OpenAIChatCompletionsAdapter
 
 
 def load_config():

@@ -1,0 +1,9 @@
+{
+  "name": "planner",
+  "role": "阶段一规划代理",
+  "provider_ref": "dashscope_glm",
+  "model": "glm-5",
+  "system_prompt_file": "prompts/planner_system.txt",
+  "temperature": 0.1,
+  "max_tokens": 2048
+}

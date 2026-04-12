@@ -1,0 +1,9 @@
+{
+  "name": "analyst",
+  "role": "安全研判代理",
+  "provider_ref": "dashscope_glm",
+  "model": "glm-5",
+  "system_prompt_file": "prompts/analyst_system.txt",
+  "temperature": 0.2,
+  "max_tokens": 2048
+}
