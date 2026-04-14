@@ -10,9 +10,10 @@ Paimon SDK 简单聊天程序示例
 - 输入 'exit' 或 'quit' 退出
 
 使用方式：
-    1. 复制 .env.example 为 .env 并填入 OPENAI_API_KEY
-    2. 修改 examples/config.json 配置模型参数
-    3. uv run python examples/chat_demo.py
+    1. uv sync --extra examples
+    2. 复制 examples/.env.example 为 examples/.env 并填入 OPENAI_API_KEY
+    3. 修改 examples/config.json 配置模型参数
+    4. uv run python examples/chat_demo.py
 """
 
 import asyncio
@@ -175,7 +176,7 @@ async def main():
     # 8. 开始交互式对话
     print()
     print("=" * 50)
-        print("Paimon SDK 聊天程序")
+    print("Paimon SDK 聊天程序")
     print("输入 'exit' 或 'quit' 退出")
     print("=" * 50)
     print()
