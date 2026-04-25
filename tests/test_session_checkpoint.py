@@ -153,6 +153,46 @@ def test_checkpoint_roundtrip_resume_continue_from_user_boundary():
     asyncio.run(_run())
 
 
+def test_session_json_and_file_roundtrip(tmp_path):
+    model = _make_model()
+    session = Agent(
+        AgentOptions(
+            model=model,
+            system_prompt="You are concise.",
+            messages=[UserMessage(content=[TextContent(text="persist me")])],
+            metadata={"tenant": "demo"},
+        )
+    ).export_session()
+
+    from_json = AgentSession.from_json(session.to_json())
+    assert from_json.to_dict() == session.to_dict()
+
+    session_path = tmp_path / "session.json"
+    session.save(session_path)
+
+    loaded = AgentSession.load(session_path)
+    assert loaded.to_dict() == session.to_dict()
+
+
+def test_checkpoint_json_and_file_roundtrip(tmp_path):
+    model = _make_model()
+    checkpoint = Agent(
+        AgentOptions(
+            model=model,
+            messages=[UserMessage(content=[TextContent(text="checkpoint me")])],
+        )
+    ).export_checkpoint()
+
+    from_json = Checkpoint.from_json(checkpoint.to_json())
+    assert from_json.to_dict() == checkpoint.to_dict()
+
+    checkpoint_path = tmp_path / "checkpoint.json"
+    checkpoint.save(checkpoint_path)
+
+    loaded = Checkpoint.load(checkpoint_path)
+    assert loaded.to_dict() == checkpoint.to_dict()
+
+
 def test_replay_run_returns_only_one_run_log():
     async def _run() -> None:
         model = _make_model()

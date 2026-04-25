@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import json
 from copy import deepcopy
 from dataclasses import dataclass, field
+from os import PathLike
+from pathlib import Path
 from typing import Any, Literal, Mapping, Sequence
 from uuid import uuid4
 
@@ -443,6 +446,12 @@ class AgentSession:
             "event_log": [event.to_dict() for event in self.event_log],
         }
 
+    def to_json(self, *, indent: int | None = 2) -> str:
+        return json.dumps(self.to_dict(), ensure_ascii=False, indent=indent)
+
+    def save(self, path: str | PathLike[str], *, indent: int | None = 2) -> None:
+        Path(path).write_text(self.to_json(indent=indent), encoding="utf-8")
+
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "AgentSession":
         return cls(
@@ -459,6 +468,14 @@ class AgentSession:
             stable_boundary=StableBoundary.from_dict(data.get("stable_boundary", {})),
             event_log=[RecordedEvent.from_dict(item) for item in data.get("event_log", [])],
         )
+
+    @classmethod
+    def from_json(cls, data: str | bytes | bytearray) -> "AgentSession":
+        return cls.from_dict(json.loads(data))
+
+    @classmethod
+    def load(cls, path: str | PathLike[str]) -> "AgentSession":
+        return cls.from_json(Path(path).read_text(encoding="utf-8"))
 
 
 @dataclass(slots=True)
@@ -478,6 +495,12 @@ class Checkpoint:
             "stable_boundary": self.stable_boundary.to_dict(),
         }
 
+    def to_json(self, *, indent: int | None = 2) -> str:
+        return json.dumps(self.to_dict(), ensure_ascii=False, indent=indent)
+
+    def save(self, path: str | PathLike[str], *, indent: int | None = 2) -> None:
+        Path(path).write_text(self.to_json(indent=indent), encoding="utf-8")
+
     @classmethod
     def from_dict(cls, data: Mapping[str, Any]) -> "Checkpoint":
         return cls(
@@ -487,6 +510,14 @@ class Checkpoint:
             session=AgentSession.from_dict(data.get("session", {})),
             stable_boundary=StableBoundary.from_dict(data.get("stable_boundary", {})),
         )
+
+    @classmethod
+    def from_json(cls, data: str | bytes | bytearray) -> "Checkpoint":
+        return cls.from_dict(json.loads(data))
+
+    @classmethod
+    def load(cls, path: str | PathLike[str]) -> "Checkpoint":
+        return cls.from_json(Path(path).read_text(encoding="utf-8"))
 
 
 def replay_events(event_log: Sequence[RecordedEvent], run_id: str | None = None) -> list[RecordedEvent]:
