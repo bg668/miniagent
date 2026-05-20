@@ -7,6 +7,7 @@ from typing import Any, AsyncIterator, Awaitable, Callable, Iterable, Mapping, S
 from paimonsdk.adapters._openai_common import (
     ImmediateEventStream,
     OpenAIRequestConfig,
+    build_extra_body,
     base_assistant_message,
     error_assistant_message,
     first_item,
@@ -395,6 +396,9 @@ class OpenAIChatCompletionsAdapter:
         merged_metadata = merge_metadata(self._request_config, options.metadata)
         if merged_metadata:
             request_options["metadata"] = merged_metadata
+        extra_body = build_extra_body(self._request_config, options.thinking_level)
+        if extra_body:
+            request_options["extra_body"] = extra_body
         if stream:
             request_options["stream_options"] = {"include_usage": True}
         return request_options

@@ -7,6 +7,7 @@ from typing import Any, AsyncIterator, Mapping, Sequence
 from paimonsdk.adapters._openai_common import (
     ImmediateEventStream,
     OpenAIRequestConfig,
+    build_extra_body,
     base_assistant_message,
     error_assistant_message,
     maybe_await,
@@ -594,6 +595,9 @@ class OpenAIResponsesAdapter:
         merged_metadata = merge_metadata(self._request_config, options.metadata)
         if merged_metadata:
             request_options["metadata"] = merged_metadata
+        extra_body = build_extra_body(self._request_config, options.thinking_level)
+        if extra_body:
+            request_options["extra_body"] = extra_body
         return request_options
 
 

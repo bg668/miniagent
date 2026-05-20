@@ -59,4 +59,11 @@ uv run python examples/chat_demo.py
 - `chat.completions`
 - `responses`
 
+`examples/config.json` 还支持两个与 thinking 相关的入口：
+
+- `extra_body`：原样透传到底层 OpenAI 风格请求，可用于 `{"enable_thinking": true}` 这类 provider 私有参数
+- `thinking_level`：可选顶层字段；只有显式配置时才会发送，默认不会附加到请求
+
+`examples/chat_demo.py` 会把流式 `ThinkingContent` 和最终回答文本分区打印，便于观察模型 reasoning 输出。
+
 文档入口见 [docs/README.md](docs/README.md)。

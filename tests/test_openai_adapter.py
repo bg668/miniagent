@@ -18,6 +18,7 @@ from paimonsdk.runtime.models import (
     ModelInfo,
     TextContent,
     ThinkingContent,
+    ThinkingLevel,
     ToolCallContent,
     ToolExecutionMode,
     ToolResultMessage,
@@ -53,12 +54,19 @@ class FakeAsyncChunkStream:
         return _iterate()
 
 
-def _loop_config(adapter, model: ModelInfo, *, tool_execution: ToolExecutionMode = ToolExecutionMode.PARALLEL):
+def _loop_config(
+    adapter,
+    model: ModelInfo,
+    *,
+    tool_execution: ToolExecutionMode = ToolExecutionMode.PARALLEL,
+    thinking_level: ThinkingLevel = ThinkingLevel.OFF,
+):
     return AgentLoopConfig(
         model=model,
         stream_fn=adapter.stream_message,
         convert_to_llm=lambda messages: list(messages),
         tool_execution=tool_execution,
+        thinking_level=thinking_level,
     )
 
 
@@ -263,6 +271,81 @@ def test_chat_adapter_request_config_owns_provider_specific_options():
         assert client.chat.completions.calls[0]["top_p"] == 0.9
         assert client.chat.completions.calls[0]["max_tokens"] == 256
         assert client.chat.completions.calls[0]["metadata"] == {"trace_id": "req-1"}
+
+    asyncio.run(_run())
+
+
+def test_chat_adapter_forwards_extra_body_and_omits_default_thinking_level():
+    async def _run() -> None:
+        response = SimpleNamespace(
+            id="chatcmpl_1",
+            model="gpt-4o-mini",
+            usage=SimpleNamespace(prompt_tokens=11, completion_tokens=7, total_tokens=18),
+            choices=[
+                SimpleNamespace(
+                    finish_reason="stop",
+                    message=SimpleNamespace(content="Hello from model", tool_calls=[]),
+                )
+            ],
+        )
+        client = FakeOpenAIClient(chat_response=response)
+        adapter = OpenAIChatCompletionsAdapter(
+            client,
+            request_config=OpenAIRequestConfig(
+                extra_body={"enable_thinking": True},
+            ),
+        )
+        model = ModelInfo(id="gpt-4o-mini", provider="openai", api="chat.completions")
+        context = AgentContext(
+            system_prompt="system",
+            messages=[UserMessage(content=[TextContent(text="Say hello")])],
+            tools=[],
+        )
+
+        await adapter.create_message(model, context, _loop_config(adapter, model))
+
+        call = client.chat.completions.calls[0]
+        assert call["extra_body"] == {"enable_thinking": True}
+        assert "thinking_level" not in call["extra_body"]
+
+    asyncio.run(_run())
+
+
+def test_chat_adapter_sends_explicit_thinking_level_and_overrides_extra_body_conflict():
+    async def _run() -> None:
+        response = SimpleNamespace(
+            id="chatcmpl_1",
+            model="gpt-4o-mini",
+            usage=SimpleNamespace(prompt_tokens=11, completion_tokens=7, total_tokens=18),
+            choices=[
+                SimpleNamespace(
+                    finish_reason="stop",
+                    message=SimpleNamespace(content="Hello from model", tool_calls=[]),
+                )
+            ],
+        )
+        client = FakeOpenAIClient(chat_response=response)
+        adapter = OpenAIChatCompletionsAdapter(
+            client,
+            request_config=OpenAIRequestConfig(
+                extra_body={"enable_thinking": True, "thinking_level": "low"},
+            ),
+        )
+        model = ModelInfo(id="gpt-4o-mini", provider="openai", api="chat.completions")
+        context = AgentContext(
+            system_prompt="system",
+            messages=[UserMessage(content=[TextContent(text="Say hello")])],
+            tools=[],
+        )
+
+        await adapter.create_message(
+            model,
+            context,
+            _loop_config(adapter, model, thinking_level=ThinkingLevel.HIGH),
+        )
+
+        call = client.chat.completions.calls[0]
+        assert call["extra_body"] == {"enable_thinking": True, "thinking_level": "high"}
 
     asyncio.run(_run())
 
@@ -513,5 +596,74 @@ def test_responses_adapter_builds_requests_from_transcript_and_config():
             "call_id": "call_1",
             "output": "world",
         }
+
+    asyncio.run(_run())
+
+
+def test_responses_adapter_forwards_extra_body_and_omits_default_thinking_level():
+    async def _run() -> None:
+        response = {
+            "model": "gpt-4.1-mini",
+            "status": "completed",
+            "usage": {
+                "input_tokens": 3,
+                "input_tokens_details": {"cached_tokens": 0},
+                "output_tokens": 1,
+                "output_tokens_details": {"reasoning_tokens": 0},
+                "total_tokens": 4,
+            },
+            "output": [{"type": "message", "content": [{"type": "output_text", "text": "done"}]}],
+        }
+        client = FakeOpenAIClient(responses_response=response)
+        adapter = OpenAIResponsesAdapter(
+            client,
+            request_config=OpenAIRequestConfig(
+                extra_body={"enable_thinking": True},
+            ),
+        )
+        model = ModelInfo(id="gpt-4.1-mini", provider="openai", api="responses")
+        context = AgentContext(messages=[UserMessage(content=[TextContent(text="hello")])])
+
+        await adapter.create_message(model, context, _loop_config(adapter, model))
+
+        call = client.responses.calls[0]
+        assert call["extra_body"] == {"enable_thinking": True}
+        assert "thinking_level" not in call["extra_body"]
+
+    asyncio.run(_run())
+
+
+def test_responses_adapter_sends_explicit_thinking_level_and_overrides_extra_body_conflict():
+    async def _run() -> None:
+        response = {
+            "model": "gpt-4.1-mini",
+            "status": "completed",
+            "usage": {
+                "input_tokens": 3,
+                "input_tokens_details": {"cached_tokens": 0},
+                "output_tokens": 1,
+                "output_tokens_details": {"reasoning_tokens": 0},
+                "total_tokens": 4,
+            },
+            "output": [{"type": "message", "content": [{"type": "output_text", "text": "done"}]}],
+        }
+        client = FakeOpenAIClient(responses_response=response)
+        adapter = OpenAIResponsesAdapter(
+            client,
+            request_config=OpenAIRequestConfig(
+                extra_body={"enable_thinking": True, "thinking_level": "low"},
+            ),
+        )
+        model = ModelInfo(id="gpt-4.1-mini", provider="openai", api="responses")
+        context = AgentContext(messages=[UserMessage(content=[TextContent(text="hello")])])
+
+        await adapter.create_message(
+            model,
+            context,
+            _loop_config(adapter, model, thinking_level=ThinkingLevel.HIGH),
+        )
+
+        call = client.responses.calls[0]
+        assert call["extra_body"] == {"enable_thinking": True, "thinking_level": "high"}
 
     asyncio.run(_run())

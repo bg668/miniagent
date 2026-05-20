@@ -1094,13 +1094,16 @@ options = AgentOptions(
 当前实现中：
 
 - `thinking_level` 会进入 `Agent` 状态，并被带进 `AgentLoopConfig`
+- 默认 OpenAI 适配器会在 `thinking_level != OFF` 时，把它序列化到请求 `extra_body["thinking_level"]`
+- 如果 `thinking_level == OFF`，适配器不会发送该字段
 
-但在当前仓库默认的 OpenAI Chat Completions 适配器里，这个字段没有被进一步用于请求构造。因此更准确的说法是：
+这意味着：
 
-- `thinking_level` 目前是 kernel 已保存字段
-- 是否真正影响模型行为，取决于你的自定义适配器或未来扩展实现
+- `thinking_level` 仍然是 kernel 已保存字段
+- 在仓库默认 OpenAI 适配器下，它现在也会影响实际请求序列化
+- provider 私有开关应放在 `OpenAIRequestConfig.extra_body` 中，例如 `{"enable_thinking": true}`
 
-如果你现在只使用仓库中的默认 OpenAI 适配器，不应假设调整 `thinking_level` 就一定会改变模型输出。
+如果同时在 `extra_body` 和 `thinking_level` 中指定 thinking 级别，显式的 `thinking_level` 配置优先。
 
 ### 5.7 其他配置
 
@@ -3019,7 +3022,7 @@ await agent.continue_()  # 如果当前没有可继续边界，会直接抛错
 | `steering_mode` | `MessageQueueMode` | `"one-at-a-time"` | 已生效 | steering 队列消费方式 |
 | `follow_up_mode` | `MessageQueueMode` | `"one-at-a-time"` | 已生效 | follow-up 队列消费方式 |
 | `metadata` | `dict[str, Any]` | `{}` | 已生效 | 会话附加元信息 |
-| `thinking_level` | `ThinkingLevel` | `OFF` | 已保存、已透传 | 是否真正影响模型取决于适配器 |
+| `thinking_level` | `ThinkingLevel` | `OFF` | 已保存、默认省略、显式值透传 | `OFF` 不发送，非默认值写入请求 `extra_body["thinking_level"]` |
 
 如果只想用最小配置跑通，优先关注：
 

@@ -10,6 +10,7 @@ from paimonsdk.runtime.models import (
     AssistantMessageEvent,
     AssistantMessageEventStream,
     TextContent,
+    ThinkingLevel,
     TokenUsage,
     UsageCost,
     utc_timestamp_ms,
@@ -24,13 +25,18 @@ class OpenAIRequestConfig:
     top_p: float | None = None
     max_tokens: int | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
+    extra_body: dict[str, Any] = field(default_factory=dict)
 
     def merged(self, **overrides: Any) -> "OpenAIRequestConfig":
         metadata = dict(self.metadata)
         override_metadata = overrides.pop("metadata", None)
         if isinstance(override_metadata, Mapping):
             metadata.update(override_metadata)
-        merged = replace(self, metadata=metadata)
+        extra_body = dict(self.extra_body)
+        override_extra_body = overrides.pop("extra_body", None)
+        if isinstance(override_extra_body, Mapping):
+            extra_body.update(override_extra_body)
+        merged = replace(self, metadata=metadata, extra_body=extra_body)
         for key, value in overrides.items():
             setattr(merged, key, value)
         return merged
@@ -68,6 +74,18 @@ def merge_metadata(request_config: OpenAIRequestConfig, runtime_metadata: Mappin
     if runtime_metadata:
         merged.update(runtime_metadata)
     return merged
+
+
+def build_extra_body(
+    request_config: OpenAIRequestConfig,
+    thinking_level: ThinkingLevel,
+) -> dict[str, Any]:
+    extra_body = dict(request_config.extra_body)
+    if thinking_level != ThinkingLevel.OFF:
+        extra_body["thinking_level"] = thinking_level.value
+    else:
+        extra_body.pop("thinking_level", None)
+    return extra_body
 
 
 def safe_json_dumps(value: Any) -> str:
@@ -186,6 +204,7 @@ class ImmediateEventStream(AssistantMessageEventStream):
 __all__ = [
     "ImmediateEventStream",
     "OpenAIRequestConfig",
+    "build_extra_body",
     "base_assistant_message",
     "error_assistant_message",
     "first_item",

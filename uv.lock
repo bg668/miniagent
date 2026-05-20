@@ -225,6 +225,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "openai" },
+    { name = "pytest" },
 ]
 
 [package.optional-dependencies]
@@ -238,6 +239,7 @@ examples = [
 [package.metadata]
 requires-dist = [
     { name = "openai", specifier = ">=2.31.0" },
+    { name = "pytest", specifier = ">=9.0.3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.3" },
     { name = "python-dotenv", marker = "extra == 'examples'", specifier = ">=1.0.1" },
 ]
